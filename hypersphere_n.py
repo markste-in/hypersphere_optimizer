@@ -31,9 +31,9 @@ def plot_surface(f):
     #fig.colorbar(surf, shrink=0.5, aspect=5)
 
     plt.show()
-dim = 2e6
+dim = 1e4
 noiseTableSize = 1000
-candidateSize = 10
+candidateSize = 20
 
 print(candidateSize*dim , "points need to be calculate at every step")
 
@@ -45,5 +45,5 @@ issue = Issue('rastrigin',dim=dim)
 # print('creating noise table...')
 # noiseTable = points_on_sphere(dim=dim,N=noiseTableSize)
 # print('noise table created with shape',noiseTable.shape)
-optimize(issue, local_stepSize=.1, max_episodes=1000, N=candidateSize, noiseTable=None)
+optimize(issue, local_stepSize=.1, max_episodes=50000, N=candidateSize, noiseTable=None)
 #plot_surface(issue.f)
