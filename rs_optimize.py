@@ -20,13 +20,13 @@ def points_in_cloud(dim = 3,N=10):
     return np.array([np.random.random(int(dim)) for i in range(N)])
 
 @HelperFunctions.t_decorator
-def optimize(issue, local_stepSize = 1., max_episodes = 100, N = 5, noiseTable = None):
+def optimize(issue, local_stepSize = 1., max_episodes = 100, N = 5, SP = None):
     f = issue.f
     Dim = issue.dim
     dynamic_stepSize = local_stepSize
 
 
-    SP = np.random.uniform(search_range[0],search_range[1],Dim)
+    SP = np.random.uniform(search_range[0],search_range[1],Dim) if type(SP) == type(None) else SP
     best_value = ray.get(f.remote(SP))
 
     #x, y, z = zip(*xyz)
@@ -36,22 +36,13 @@ def optimize(issue, local_stepSize = 1., max_episodes = 100, N = 5, noiseTable =
     best_point_on_sphere = None
 
     for i in range(max_episodes):
-        # if ((failed_to_improve >= 1) or (type(best_point_on_sphere) == type(None))):
-        #print('generate new points on sphere')
 
-        if type(noiseTable) is not type(None):
-            rndPick = np.random.randint(0, noiseTable.shape[0], N)
-            hyperSp = noiseTable[rndPick]
-
-        else:
-            hyperSp = points_on_sphere(dim=Dim,N=N)
+        hyperSp = points_on_sphere(dim=Dim,N=N)
         dynamic_stepSize = np.random.choice(np.linspace(local_stepSize, 10.*local_stepSize,10))
 
 
         hyperSp = np.array(hyperSp)
-        #dynamic_hyperSp = dynamic_stepSize * hyperSp
 
-        #print(hyperSp)
         candidates = SP + local_stepSize * hyperSp
         dynamic_candidates = SP + dynamic_stepSize*hyperSp
 
@@ -108,6 +99,6 @@ def optimize(issue, local_stepSize = 1., max_episodes = 100, N = 5, noiseTable =
             # print(i, '[', failed_to_improve, ']', SP, 'not improved!->', best_value, 'delta:', delta, 'with',
             #       'global step' if local_global_success else 'local step', 'SZ:', local_stepSize, dynamic_stepSize)
 
-    print('\n',SP,f([SP]))
+    return SP
 
 

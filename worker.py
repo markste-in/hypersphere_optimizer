@@ -2,6 +2,8 @@ import gym
 import ray
 import rs_optimize
 import numpy as np
+import test_functions
+import pickle
 np.set_printoptions(suppress=True)
 
 env = gym.make('BipedalWalker-v2')
@@ -32,7 +34,7 @@ def pick_action(obs, weights):
     #a = np.argmax(a)
     return a[0]
 
-#@ray.remote
+
 def run_environment(env, weights, steps=1000, render=True, average=1):
     best_reward = []
     for i in range(average):
@@ -67,41 +69,15 @@ def f(weights):
     #assert not np.isnan(reward_sum), "return is NaN"
     return reward_sum
 
-import test_functions
+
 issue = test_functions.Issue(f,obs_space*action_space)
 
-def run(worker):
-    # np.random.seed()
-    print('Start Worker:', worker)
 
-    best_weights = model.weights
-    best_score = 0
-    episode = 0
-    reward_sum = 0
-
-    while episode < max_attempts and best_score < steps:
-        # print(worker,end="") if episode % 500 != 0 else print()
-        #         if episode % 100 == 0:
-        #             run_environment(env,best_weights,steps,render=True)
-
-        reward_sum = run_environment(env, steps, render=False)
-
-        if reward_sum > best_score:
-            best_score = reward_sum
-            best_weights = model.weights
-            print(f'\nWorker {worker} reporting new score', best_score, episode)
-
-
-        else:
-            model.weights = best_weights
-
-
-        episode += 1
-    print(f'End Worker {worker} after {episode} with {best_score}')
-    return best_weights
-
-#results = run(0)
 ray.init(num_cpus=4, local_mode=False)
 
+SP = np.random.uniform(-1,1,issue.dim)
 
-rs_optimize.optimize(issue,0.1,100000,5)
+while True:
+    SP = rs_optimize.optimize(issue,0.1,100,5,SP=SP)
+    pickle.dump(SP, open("bipedalwalker_weights.p", "wb"))
+    run_environment(env, SP, steps=1000, render=True)
