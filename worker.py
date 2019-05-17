@@ -4,11 +4,14 @@ import rs_optimize
 import numpy as np
 import test_functions
 import pickle
-np.set_printoptions(suppress=True)
+import multiprocessing
+
+cpu_count = multiprocessing.cpu_count()
+
 
 env = gym.make('BipedalWalker-v2')
-# env.seed(0)
-# np.random.seed(0)
+env.seed(0)
+np.random.seed(0)
 
 obs_space = env.observation_space.shape[0]
 action_space = env.action_space.shape[0]
@@ -66,18 +69,18 @@ max_attempts = 1e3
 def f(weights):
 
     reward_sum = -1*run_environment(env, weights, steps, render=False)
-    #assert not np.isnan(reward_sum), "return is NaN"
+
     return reward_sum
 
 
 issue = test_functions.Issue(f,obs_space*action_space)
 
 
-ray.init(num_cpus=4, local_mode=False)
+ray.init(num_cpus=cpu_count, local_mode=False, include_webui=True)
 
 SP = np.random.uniform(-1,1,issue.dim)
 
 while True:
-    SP = rs_optimize.optimize(issue,0.1,100,5,SP=SP)
+    SP = rs_optimize.optimize(issue,0.1,200,20,SP=SP)
     pickle.dump(SP, open("bipedalwalker_weights.p", "wb"))
     run_environment(env, SP, steps=1000, render=True)
