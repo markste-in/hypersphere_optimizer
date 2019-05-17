@@ -1,5 +1,5 @@
 import gym
-
+import ray
 import rs_optimize
 import numpy as np
 np.set_printoptions(suppress=True)
@@ -32,7 +32,7 @@ def pick_action(obs, weights):
     #a = np.argmax(a)
     return a[0]
 
-
+#@ray.remote
 def run_environment(env, weights, steps=1000, render=True, average=1):
     best_reward = []
     for i in range(average):
@@ -60,7 +60,7 @@ def run_environment(env, weights, steps=1000, render=True, average=1):
 steps = 500
 
 max_attempts = 1e3
-
+@ray.remote
 def f(weights):
 
     reward_sum = -1*run_environment(env, weights, steps, render=False)
@@ -101,5 +101,7 @@ def run(worker):
     return best_weights
 
 #results = run(0)
+ray.init(num_cpus=4, local_mode=False)
+
 
 rs_optimize.optimize(issue,0.1,100000,5)

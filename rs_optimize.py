@@ -1,5 +1,5 @@
 import numpy as np
-
+import ray
 import HelperFunctions
 
 search_range = [-1,1]
@@ -27,7 +27,7 @@ def optimize(issue, local_stepSize = 1., max_episodes = 100, N = 5, noiseTable =
 
 
     SP = np.random.uniform(search_range[0],search_range[1],Dim)
-    best_value = f(SP)
+    best_value = ray.get(f.remote(SP))
 
     #x, y, z = zip(*xyz)
     print('starting here:',SP)
@@ -55,8 +55,8 @@ def optimize(issue, local_stepSize = 1., max_episodes = 100, N = 5, noiseTable =
         candidates = SP + local_stepSize * hyperSp
         dynamic_candidates = SP + dynamic_stepSize*hyperSp
 
-        eval_cand=[ f(can) for can in candidates]
-        dynamic_eval_cand = [f(dyn) for dyn in dynamic_candidates]
+        eval_cand=ray.get([ f.remote(can) for can in candidates])
+        dynamic_eval_cand = ray.get([f.remote(dyn) for dyn in dynamic_candidates])
 
         min_val_local = np.min(eval_cand)
         min_val_global = np.min(dynamic_eval_cand)
