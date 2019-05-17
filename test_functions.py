@@ -16,32 +16,30 @@ class Issue():
         elif (fname == 'rosenbrock'):
             self.f = Rosenbrock_function
         else:
-            raise NotImplementedError
+            self.f = fname
 
         self.dim = int(dim)
 
 
 def Rastrigin_function(X):
-    ret = list()
 
-    for i in X:
-        ret.append(10 + np.sum(np.square(np.array(i)) - np.cos(2*np.pi*np.array(i))))
-
+    a = np.square(np.array(X))
+    b = -10 * np.cos(2*np.pi*np.array(X))
+    sum = np.sum(a+b)
+    ret = (10 * 2 + sum)
+    assert ret > -0.5, "Negative Value"
     return ret
 
 def Sphere_function(X):
-    ret = list()
 
-    for i in X:
-        ret.append(np.sum(np.square(i)))
+    ret = np.sum(np.square(X))
 
     return ret
 
 def Rosenbrock_function(X):
-    ret = list()
-    for point in X:
-        fun = list()
-        for i in range(len(point) - 1):
-            fun.append(100*np.square(point[i + 1] - np.square(point[i])) + np.square(1 - point[i]))
-        ret.append(np.sum(fun))
+
+    fun = list()
+    for i in range(len(X) - 1):
+        fun.append(100*np.square(X[i + 1] - np.square(X[i])) + np.square(1 - X[i]))
+    ret= np.sum(fun)
     return ret

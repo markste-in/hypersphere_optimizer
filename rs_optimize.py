@@ -2,7 +2,9 @@ import numpy as np
 
 import HelperFunctions
 
-search_range = [-100,100]
+search_range = [-1,1]
+
+import HelperFunctions
 
 
 def points_on_sphere(dim=3, N = 10):
@@ -17,7 +19,7 @@ def point_on_sphere(dim=3):
 def points_in_cloud(dim = 3,N=10):
     return np.array([np.random.random(int(dim)) for i in range(N)])
 
-
+@HelperFunctions.t_decorator
 def optimize(issue, local_stepSize = 1., max_episodes = 100, N = 5, noiseTable = None):
     f = issue.f
     Dim = issue.dim
@@ -25,7 +27,7 @@ def optimize(issue, local_stepSize = 1., max_episodes = 100, N = 5, noiseTable =
 
 
     SP = np.random.uniform(search_range[0],search_range[1],Dim)
-    best_value = f([SP])
+    best_value = f(SP)
 
     #x, y, z = zip(*xyz)
     print('starting here:',SP)
@@ -53,20 +55,24 @@ def optimize(issue, local_stepSize = 1., max_episodes = 100, N = 5, noiseTable =
         candidates = SP + local_stepSize * hyperSp
         dynamic_candidates = SP + dynamic_stepSize*hyperSp
 
-        eval_cand = f(candidates)
-        dynamic_eval_cand = f(dynamic_candidates)
+        eval_cand=[ f(can) for can in candidates]
+        dynamic_eval_cand = [f(dyn) for dyn in dynamic_candidates]
 
         min_val_local = np.min(eval_cand)
         min_val_global = np.min(dynamic_eval_cand)
 
         local_global_success = np.argmin([min_val_local,min_val_global])
-
+        delta = best_value - np.min([min_val_local, min_val_global])
+        assert not np.isnan(delta), "detla is NaN"
         if (np.min([min_val_local,min_val_global]) <best_value):
 
 
-            SP = candidates[np.argmin(eval_cand)] if min_val_local<min_val_global else dynamic_candidates[np.argmin(dynamic_eval_cand)]
+            if min_val_local<min_val_global:
+                SP = candidates[np.argmin(eval_cand)]
+            else:
+                SP = dynamic_candidates[np.argmin(dynamic_eval_cand)]
             best_point_on_sphere = hyperSp[np.argmin(eval_cand)]
-            delta = best_value - np.min([min_val_local,min_val_global])
+
             if (delta < 1e-3):
                 failed_to_improve += 1
                 print('.',end='')
@@ -88,15 +94,15 @@ def optimize(issue, local_stepSize = 1., max_episodes = 100, N = 5, noiseTable =
         else:
             print('x',end='')
             failed_to_improve +=1
-            if (failed_to_improve > 10 and failed_to_improve % 10 ==0):
+            if (failed_to_improve > 5 and failed_to_improve % 5 ==0):
                 local_stepSize /= 2.
-                print('\n', i, '[', failed_to_improve, ']','failed to improve for more than 10 steps -> reducing step size to', local_stepSize)
+                print('\n', i, '[', failed_to_improve, ']','failed to improve for more than 5 steps -> reducing step size to', local_stepSize)
                 print('\n', i, '[', failed_to_improve, ']', '->', best_value, 'delta:', delta, 'with',
                       'global step' if local_global_success else 'local step', 'SZ:', local_stepSize, dynamic_stepSize)
 
-            if (failed_to_improve > 500 and failed_to_improve % 500 == 0):
+            if (failed_to_improve > 50 and failed_to_improve % 50 == 0):
                 local_stepSize = np.random.random()
-                print('\n', i, '[', failed_to_improve, ']','failed to improve for more than 500 steps -> resetting step size to', local_stepSize)
+                print('\n', i, '[', failed_to_improve, ']','failed to improve for more than 50 steps -> resetting step size to', local_stepSize)
                 print('\n', i, '[', failed_to_improve, ']', '->', best_value, 'delta:', delta, 'with',
                       'global step' if local_global_success else 'local step', 'SZ:', local_stepSize, dynamic_stepSize)
             # print(i, '[', failed_to_improve, ']', SP, 'not improved!->', best_value, 'delta:', delta, 'with',

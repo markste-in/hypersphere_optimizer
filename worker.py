@@ -1,39 +1,39 @@
 import gym
-import multiprocessing
-import tensorflow as tf
 
+import rs_optimize
 import numpy as np
 np.set_printoptions(suppress=True)
 
 env = gym.make('BipedalWalker-v2')
-env.seed(0)
-np.random.seed(0)
+# env.seed(0)
+# np.random.seed(0)
 
-model = tf.keras.models.Sequential()
-model.add(tf.keras.layers.Dense(4,input_shape=(24,),activation='tanh'))
-model.build()
-
+obs_space = env.observation_space.shape[0]
+action_space = env.action_space.shape[0]
+#action_space = env.action_space.n
 obs = env.reset()
-model.predict(obs.reshape(1,-1))
+class Model:
+    def __init__(self):
+        self.weights = np.zeros(shape=(obs_space,action_space))
+    def action(self,obs):
+        return np.matmul(obs,self.weights)
 
-def pick_action(obs):
-    a = model.predict(obs.reshape(1,-1))
+
+model = Model()
+
+def soft_max(X):
+    return np.exp(X )/ np.sum(np.exp(X))
+
+def pick_action(obs, weights):
+
+    model.weights = np.array(weights).reshape(obs_space,action_space)
+    a = model.action(obs.reshape(1,-1))
+    #a = soft_max(a[0])
+    #a = np.argmax(a)
     return a[0]
 
-def generate_mutation(weights):
-    gamma = np.random.choice((np.logspace(0,1,num=200)-0.999)**2)
-    for i, w in enumerate(weights[0]):
-        if np.random.randint(0,2): # full mutation
-            weights[0][i] = gamma * np.random.random(w.shape)*2-1
-        else: #spot mutation
-            spot = np.random.choice(weights[0][i].size) # spot that gets mutated
-            rnd = gamma * np.random.rand()*2-1 #mutation value
-            rvl = weights[0][i].ravel() #mutate
-            rvl[spot] = rnd #mutate
-            weights[0][i]= rvl.reshape(weights[0][i].shape) #write mutation
-    return weights
 
-def run_environment(env, weights, steps=1000, render=False, average=1):
+def run_environment(env, weights, steps=1000, render=True, average=1):
     best_reward = []
     for i in range(average):
         step = 0
@@ -42,30 +42,40 @@ def run_environment(env, weights, steps=1000, render=False, average=1):
         # action_space = env.action_space.n
 
         while step < steps:
-            if render: env.render()
-            action = pick_action(obs)
+            if render:
+                env.render()
+            action = pick_action(obs, weights)
 
             obs, reward, done, _ = env.step(action)
 
             reward_sum += reward
             step += 1
             if done:
-                best_reward.append(reward_sum)
-                break
 
+                break
+        best_reward.append(reward_sum)
+    assert not np.isnan(np.average(best_reward)), "return is NaN"
     return np.average(best_reward)
 
 steps = 500
-obs_space = env.observation_space.shape[0]
-max_attempts = 1e9
+
+max_attempts = 1e3
+
+def f(weights):
+
+    reward_sum = -1*run_environment(env, weights, steps, render=False)
+    #assert not np.isnan(reward_sum), "return is NaN"
+    return reward_sum
+
+import test_functions
+issue = test_functions.Issue(f,obs_space*action_space)
 
 def run(worker):
     # np.random.seed()
     print('Start Worker:', worker)
 
-    weights = [layer.get_weights() for layer in model.layers]
-    best_weights = weights
-    best_score = -2000
+    best_weights = model.weights
+    best_score = 0
     episode = 0
     reward_sum = 0
 
@@ -74,22 +84,22 @@ def run(worker):
         #         if episode % 100 == 0:
         #             run_environment(env,best_weights,steps,render=True)
 
-        reward_sum = run_environment(env, weights, steps, render=True)
+        reward_sum = run_environment(env, steps, render=False)
 
         if reward_sum > best_score:
             best_score = reward_sum
-            best_weights = weights
+            best_weights = model.weights
             print(f'\nWorker {worker} reporting new score', best_score, episode)
 
-        else:
-            weights = best_weights
 
-        weights = generate_mutation(weights)
-        # print( weights)
-        for i, layer in enumerate(model.layers): model.set_weights(weights[i])
+        else:
+            model.weights = best_weights
+
 
         episode += 1
     print(f'End Worker {worker} after {episode} with {best_score}')
     return best_weights
 
-results = run(0)
+#results = run(0)
+
+rs_optimize.optimize(issue,0.1,100000,5)

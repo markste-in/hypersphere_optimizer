@@ -31,19 +31,20 @@ def plot_surface(f):
     #fig.colorbar(surf, shrink=0.5, aspect=5)
 
     plt.show()
-dim = 1e4
+dim = 2e5
 noiseTableSize = 1000
-candidateSize = 20
+candidateSize = 10
 
 print(candidateSize*dim , "points need to be calculate at every step")
 
-assert noiseTableSize > candidateSize, 'You create too many candidates for your noiseTable'
-assert (noiseTableSize/candidateSize)>20, ' Your noise tabe is too small'
+#assert noiseTableSize > candidateSize, 'You create too many candidates for your noiseTable'
+#assert (noiseTableSize/candidateSize)>20, ' Your noise tabe is too small'
 
-issue = Issue('rastrigin',dim=dim)
+issue = Issue('sphere',dim=dim)
 
 # print('creating noise table...')
 # noiseTable = points_on_sphere(dim=dim,N=noiseTableSize)
 # print('noise table created with shape',noiseTable.shape)
-optimize(issue, local_stepSize=.1, max_episodes=50000, N=candidateSize, noiseTable=None)
+
+optimize(issue, local_stepSize=.1, max_episodes=5000, N=candidateSize, noiseTable=None)
 #plot_surface(issue.f)
