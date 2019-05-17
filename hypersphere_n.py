@@ -37,14 +37,10 @@ candidateSize = 10
 
 print(candidateSize*dim , "points need to be calculate at every step")
 
-#assert noiseTableSize > candidateSize, 'You create too many candidates for your noiseTable'
-#assert (noiseTableSize/candidateSize)>20, ' Your noise tabe is too small'
+
 
 issue = Issue('sphere',dim=dim)
 
-# print('creating noise table...')
-# noiseTable = points_on_sphere(dim=dim,N=noiseTableSize)
-# print('noise table created with shape',noiseTable.shape)
 
 optimize(issue, local_stepSize=.1, max_episodes=5000, N=candidateSize, noiseTable=None)
 #plot_surface(issue.f)

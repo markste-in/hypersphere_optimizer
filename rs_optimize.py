@@ -1,6 +1,5 @@
 import numpy as np
 import ray
-import HelperFunctions
 
 search_range = [-1,1]
 
@@ -8,8 +7,9 @@ import HelperFunctions
 
 
 def points_on_sphere(dim=3, N = 10):
-    return np.array([point_on_sphere(dim) for i in range(N)])
+    return np.array(ray.get([point_on_sphere.remote(dim) for i in range(N)]))
 
+@ray.remote
 def point_on_sphere(dim=3):
     dim = int(dim)
     xyz = np.random.normal(0, 1,dim)
@@ -20,37 +20,36 @@ def points_in_cloud(dim = 3,N=10):
     return np.array([np.random.random(int(dim)) for i in range(N)])
 
 @HelperFunctions.t_decorator
-def optimize(issue, local_stepSize = 1., max_episodes = 100, N = 5, SP = None):
+def optimize(issue, local_stepSize = 1., max_episodes = 100, N = 5, starting_weights = None):
     f = issue.f
     Dim = issue.dim
-    dynamic_stepSize = local_stepSize
 
+    SP = np.random.uniform(search_range[0],search_range[1],Dim) if type(starting_weights) == type(None) else starting_weights
 
-    SP = np.random.uniform(search_range[0],search_range[1],Dim) if type(SP) == type(None) else SP
     best_value = ray.get(f.remote(SP))
 
     #x, y, z = zip(*xyz)
-    print('starting here:',SP)
+    print('starting here:',SP[:5])
     print('value:',best_value)
     failed_to_improve = 0
-    best_point_on_sphere = None
+
 
     for i in range(max_episodes):
 
         hyperSp = points_on_sphere(dim=Dim,N=N)
-        dynamic_stepSize = np.random.choice(np.linspace(local_stepSize, 10.*local_stepSize,10))
+        global_stepSize = np.random.choice(np.linspace(local_stepSize, 10.*local_stepSize,10))
 
 
         hyperSp = np.array(hyperSp)
 
-        candidates = SP + local_stepSize * hyperSp
-        dynamic_candidates = SP + dynamic_stepSize*hyperSp
+        local_candidates = SP + local_stepSize * hyperSp
+        global_candidates = SP + global_stepSize*hyperSp
 
-        eval_cand=ray.get([ f.remote(can) for can in candidates])
-        dynamic_eval_cand = ray.get([f.remote(dyn) for dyn in dynamic_candidates])
+        local_eval_cand=ray.get([ f.remote(can) for can in local_candidates])
+        global_eval_cand = ray.get([f.remote(dyn) for dyn in global_candidates])
 
-        min_val_local = np.min(eval_cand)
-        min_val_global = np.min(dynamic_eval_cand)
+        min_val_local = np.min(local_eval_cand)
+        min_val_global = np.min(global_eval_cand)
 
         local_global_success = np.argmin([min_val_local,min_val_global])
         delta = best_value - np.min([min_val_local, min_val_global])
@@ -59,10 +58,9 @@ def optimize(issue, local_stepSize = 1., max_episodes = 100, N = 5, SP = None):
 
 
             if min_val_local<min_val_global:
-                SP = candidates[np.argmin(eval_cand)]
+                SP = local_candidates[np.argmin(local_eval_cand)]
             else:
-                SP = dynamic_candidates[np.argmin(dynamic_eval_cand)]
-            best_point_on_sphere = hyperSp[np.argmin(eval_cand)]
+                SP = global_candidates[np.argmin(global_eval_cand)]
 
             if (delta < 1e-3):
                 failed_to_improve += 1
@@ -70,16 +68,14 @@ def optimize(issue, local_stepSize = 1., max_episodes = 100, N = 5, SP = None):
             else:
                 failed_to_improve = 0
 
-                if local_global_success and (dynamic_stepSize > local_stepSize):
-                    local_stepSize = dynamic_stepSize
-                # else:
-                #     dynamic_stepSize = np.random.randint(0,search_range[1]-search_range[0])/2.
+                #if local_global_success and (global_stepSize > local_stepSize):
+                local_stepSize = global_stepSize
+
 
             best_value = np.min([min_val_local,min_val_global])
             print('\n', i, '[', failed_to_improve, ']', 'improved!->', best_value, 'delta:', delta, 'with',
-                  'global step' if local_global_success else 'local step', '### SZ:', local_stepSize, dynamic_stepSize, ' ### avg hs:', np.average(hyperSp), 'avg SP:', np.average(np.abs(SP)))
+                  'global step' if local_global_success else 'local step', '### SZ:', local_stepSize, global_stepSize, ' ### avg hs:', np.average(hyperSp), 'avg SP:', np.average(np.abs(SP)))
 
-            #print(best_point_on_sphere)
 
 
         else:
@@ -89,15 +85,13 @@ def optimize(issue, local_stepSize = 1., max_episodes = 100, N = 5, SP = None):
                 local_stepSize /= 2.
                 print('\n', i, '[', failed_to_improve, ']','failed to improve for more than 5 steps -> reducing step size to', local_stepSize)
                 print('\n', i, '[', failed_to_improve, ']', '->', best_value, 'delta:', delta, 'with',
-                      'global step' if local_global_success else 'local step', 'SZ:', local_stepSize, dynamic_stepSize)
+                      'global step' if local_global_success else 'local step', 'SZ:', local_stepSize, global_stepSize)
 
             if (failed_to_improve > 50 and failed_to_improve % 50 == 0):
                 local_stepSize = np.random.random()
                 print('\n', i, '[', failed_to_improve, ']','failed to improve for more than 50 steps -> resetting step size to', local_stepSize)
                 print('\n', i, '[', failed_to_improve, ']', '->', best_value, 'delta:', delta, 'with',
-                      'global step' if local_global_success else 'local step', 'SZ:', local_stepSize, dynamic_stepSize)
-            # print(i, '[', failed_to_improve, ']', SP, 'not improved!->', best_value, 'delta:', delta, 'with',
-            #       'global step' if local_global_success else 'local step', 'SZ:', local_stepSize, dynamic_stepSize)
+                      'global step' if local_global_success else 'local step', 'SZ:', local_stepSize, global_stepSize)
 
     return SP
 
