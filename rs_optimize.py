@@ -42,8 +42,9 @@ def optimize(issue, local_stepSize = 1., max_episodes = 100, N = 5, starting_wei
 
         hyperSp = np.array(hyperSp)
 
-        local_candidates = SP + local_stepSize * hyperSp
-        global_candidates = SP + global_stepSize*hyperSp
+        local_candidates = np.clip(SP + local_stepSize * hyperSp,search_range[0],search_range[1])
+        global_candidates = np.clip(SP + global_stepSize*hyperSp,search_range[0],search_range[1])
+
 
         local_eval_cand=ray.get([ f.remote(can) for can in local_candidates])
         global_eval_cand = ray.get([f.remote(dyn) for dyn in global_candidates])

@@ -42,8 +42,8 @@ def run_environment(env, weights, steps=500, render=False, average=1):
 
 
     #best_reward= ray.get([single_env_run.remote(env, weights, steps=500, render=False) for _ in range(average)])
-    best_reward = [single_env_run(env, weights, steps=500, render=False) for _ in range(average)]
-
+    best_reward = [single_env_run(env, weights, steps=500, render=render) for _ in range(average)]
+    #print('collected rewards:',best_reward)
     return np.average(best_reward)
 
 #@ray.remote
@@ -94,7 +94,7 @@ except (OSError, IOError) as e:
 
 
 while True:
-
-    bw = rs_optimize.optimize(issue,0.1,100,10,starting_weights=bw)
-    pickle.dump(bw, open(file, "wb"))
     run_environment(env, bw, steps=steps, render=True, average=1)
+    bw = rs_optimize.optimize(issue,0.1,100,20,starting_weights=bw)
+    pickle.dump(bw, open(file, "wb"))
+
