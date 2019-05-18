@@ -95,7 +95,7 @@ def optimize(issue, local_stepSize=1., max_episodes=100, N=5, filename=None):
                       'global step' if local_global_success else 'local step', 'SZ:', local_stepSize, global_stepSize,
                       "N: ", N)
 
-            if (failed_to_improve > 50 and failed_to_improve % 50 == 0):
+            if (failed_to_improve >= 50 and failed_to_improve % 50 == 0):
                 local_stepSize = np.random.random()
                 N = N_init
                 print('\n', i, '[', failed_to_improve, ']',
