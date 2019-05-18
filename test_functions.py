@@ -25,7 +25,7 @@ def Rastrigin_function(X):
     b = -10 * np.cos(2 * np.pi * np.array(X))
     sum = np.sum(a + b)
     ret = (10 * 2 + sum)
-    assert ret > -0.5, "Negative Value"
+
     return ret
 
 

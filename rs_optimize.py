@@ -66,13 +66,13 @@ def optimize(issue, local_stepSize=1., max_episodes=100, N=5, filename=None):
             else:
                 SP = global_candidates[np.argmin(global_eval_cand)]
 
-            if (delta < 1e-5):
-                failed_to_improve += 1
-                print('.', end='')
-            else:
-                failed_to_improve = 0
-                local_stepSize = global_stepSize
-                N = (N // 2) if N > 2 else 2
+            # if (delta < 1e-5):
+            #     failed_to_improve += 1
+            #     print('.', end='')
+            # else:
+            failed_to_improve = 0
+            local_stepSize = global_stepSize
+            N = (N // 2) if N > 2 else 2
 
             best_value = np.min([min_val_local, min_val_global])
             print('\n', i, '[', failed_to_improve, ']', 'improved!->', best_value, 'delta:', delta, 'with',
@@ -95,11 +95,11 @@ def optimize(issue, local_stepSize=1., max_episodes=100, N=5, filename=None):
                       'global step' if local_global_success else 'local step', 'SZ:', local_stepSize, global_stepSize,
                       "N: ", N)
 
-            if (failed_to_improve >= 50 and failed_to_improve % 50 == 0):
+            if (failed_to_improve >= 100 and failed_to_improve % 100 == 0):
                 local_stepSize = np.random.random()
                 N = N_init
                 print('\n', i, '[', failed_to_improve, ']',
-                      'failed to improve for more than 50 steps -> resetting step size to', local_stepSize, 'and N to',
+                      'failed to improve for more than 100 steps -> resetting step size to', local_stepSize, 'and N to',
                       N)
                 print('\n', i, '[', failed_to_improve, ']', '->', best_value, 'delta:', delta, 'with',
                       'global step' if local_global_success else 'local step', 'SZ:', local_stepSize, global_stepSize,
