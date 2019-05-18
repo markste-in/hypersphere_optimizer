@@ -1,9 +1,7 @@
-#!python
-#cython: language_level=3
-
-
 import numpy as np
 import HelperFunctions
+import ray
+
 
 class Issue():
 
@@ -21,25 +19,27 @@ class Issue():
         self.dim = int(dim)
 
 
+@ray.remote
 def Rastrigin_function(X):
-
     a = np.square(np.array(X))
-    b = -10 * np.cos(2*np.pi*np.array(X))
-    sum = np.sum(a+b)
+    b = -10 * np.cos(2 * np.pi * np.array(X))
+    sum = np.sum(a + b)
     ret = (10 * 2 + sum)
     assert ret > -0.5, "Negative Value"
     return ret
 
-def Sphere_function(X):
 
+@ray.remote
+def Sphere_function(X):
     ret = np.sum(np.square(X))
 
     return ret
 
-def Rosenbrock_function(X):
 
+@ray.remote
+def Rosenbrock_function(X):
     fun = list()
     for i in range(len(X) - 1):
-        fun.append(100*np.square(X[i + 1] - np.square(X[i])) + np.square(1 - X[i]))
-    ret= np.sum(fun)
+        fun.append(100 * np.square(X[i + 1] - np.square(X[i])) + np.square(1 - X[i]))
+    ret = np.sum(fun)
     return ret
