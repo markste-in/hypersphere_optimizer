@@ -8,10 +8,10 @@ Inspired by the paper [Adaptive step size random search](https://ieeexplore.ieee
 
 Simply execute hypersphere_n.py to run the optimizer on a simple problem like the "Sphere function" or the "Rastrigin function" (you may wanna adjust the dimensions).
 
-####Rosenbrock Function
+#### Rosenbrock Function
 ![rosenbrock function][rosenbrock]
 
-####Sphere Function
+#### Sphere Function
 ![sphere function][sphere]
 
 Plot function by [Yabox](https://github.com/pablormier/yabox)
