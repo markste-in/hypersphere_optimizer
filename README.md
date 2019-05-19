@@ -6,7 +6,11 @@ Optimizer that works with a hypersphere on the objective function. The evaluatio
 Inspired by the paper [Adaptive step size random search](https://ieeexplore.ieee.org/document/1098903) by M. Schummer
 
 
-Simply execute hypersphere_n.py to run the optimizer on a simple problem like the "Sphere function" or the "Rastrigin function" (you may wanna adjust the dimensions).
+Simply execute 
+```python
+python hypersphere_n.py 
+```
+to run the optimizer on a simple problem like the "Sphere function" or the "Rastrigin function" (you may wanna adjust the dimensions).
 
 #### Rosenbrock Function
 ![rosenbrock function][rosenbrock]
@@ -17,5 +21,7 @@ Simply execute hypersphere_n.py to run the optimizer on a simple problem like th
 Plot function by [Yabox](https://github.com/pablormier/yabox)
 
 Also kinda works on the OpenAI gym environments like BipedalWalker-v2
-
+```python
+python worker.py 
+```
 
