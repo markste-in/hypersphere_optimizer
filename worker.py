@@ -85,5 +85,5 @@ ray.init(num_cpus=cpu_count, local_mode=False, include_webui=True)
 
 file = "bipedalwalker_weights.p"
 
-bw = rs_optimize.optimize(issue, local_stepSize=0.1, max_episodes=10000, N=2, filename=file)
+bw,_ = rs_optimize.optimize(issue, local_stepSize=0.1, max_episodes=10000, N=2, filename=file)
 run_environment(env, bw, steps=steps, render=True, average=1)

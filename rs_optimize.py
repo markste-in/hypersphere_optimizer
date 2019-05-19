@@ -3,7 +3,7 @@ import ray
 import pickle
 import HelperFunctions
 
-search_range = [-1, 1]
+search_range = [-3, 3]
 
 
 def points_on_sphere(dim=3, N=10):
@@ -24,6 +24,7 @@ def points_in_cloud(dim=3, N=10):
 
 @HelperFunctions.t_decorator
 def optimize(issue, local_stepSize=1., max_episodes=100, N=5, filename=None):
+    all_points=[]
     f = issue.f
     Dim = issue.dim
     N_init = N
@@ -41,7 +42,7 @@ def optimize(issue, local_stepSize=1., max_episodes=100, N=5, filename=None):
     print('starting here:', SP[:5])
     print('value:', best_value, "N: ", N)
     failed_to_improve = 0
-
+    all_points.append(list(np.ravel(SP)) + [best_value])
     for i in range(max_episodes):
 
         hyperSp = points_on_sphere(dim=Dim, N=N)
@@ -81,6 +82,8 @@ def optimize(issue, local_stepSize=1., max_episodes=100, N=5, filename=None):
             print("saving new weights...")
             pickle.dump(SP, open(file, "wb"))
 
+            all_points.append(list(np.ravel(SP)) + [best_value])
+
 
         else:
             print('x', end='')
@@ -105,4 +108,4 @@ def optimize(issue, local_stepSize=1., max_episodes=100, N=5, filename=None):
                       'global step' if local_global_success else 'local step', 'SZ:', local_stepSize, global_stepSize,
                       "N: ", N)
 
-    return SP
+    return SP, all_points

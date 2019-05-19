@@ -1,5 +1,5 @@
 import numpy as np
-import HelperFunctions
+#import HelperFunctions
 import ray
 
 
@@ -43,3 +43,4 @@ def Rosenbrock_function(X):
         fun.append(100 * np.square(X[i + 1] - np.square(X[i])) + np.square(1 - X[i]))
     ret = np.sum(fun)
     return ret
+
